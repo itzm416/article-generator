@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Realtime AI</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+
+/* ===== Background ===== */
+body {
+    margin:0;
+    font-family: "Segoe UI", Arial, sans-serif;
+    background: linear-gradient(135deg,#0f172a,#1e293b);
+    color:white;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
+}
+
+/* ===== Main Card ===== */
+.container {
+    width:600px;
+    max-width:90%;
+    background:#111827;
+    border-radius:14px;
+    box-shadow:0 10px 30px rgba(0,0,0,0.4);
+    padding:25px;
+}
+
+/* Title */
+h2 {
+    text-align:center;
+    margin-bottom:20px;
+    color:#38bdf8;
+}
+
+/* ===== Input Area ===== */
+.input-area {
+    display:flex;
+    gap:10px;
+}
+
+input {
+    flex:1;
+    padding:12px;
+    border-radius:8px;
+    border:none;
+    outline:none;
+    font-size:16px;
+    background:#1f2937;
+    color:white;
+}
+
+input::placeholder {
+    color:#9ca3af;
+}
+
+/* Button */
+button {
+    padding:12px 18px;
+    border:none;
+    border-radius:8px;
+    background:#38bdf8;
+    color:black;
+    font-weight:bold;
+    cursor:pointer;
+    transition:0.2s;
+}
+
+button:hover {
+    background:#0ea5e9;
+    transform:translateY(-1px);
+}
+
+/* ===== Response Box ===== */
+#response {
+    margin-top:20px;
+    height:300px;
+    overflow-y:auto;
+    background:#020617;
+    border-radius:10px;
+    padding:15px;
+    white-space:pre-wrap;
+    line-height:1.6;
+    border:1px solid #1f2937;
+}
+
+/* Scrollbar */
+#response::-webkit-scrollbar {
+    width:6px;
+}
+#response::-webkit-scrollbar-thumb {
+    background:#38bdf8;
+    border-radius:10px;
+}
+
+/* Typing cursor */
+.cursor {
+    display:inline-block;
+    width:8px;
+    background:#38bdf8;
+    margin-left:3px;
+    animation:blink 1s infinite;
+}
+
+@keyframes blink {
+    50% { opacity:0; }
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h2>⚡ Realtime AI Assistant</h2>
+
+<div class="input-area">
+    <input id="msg" placeholder="Ask anything..." />
+    <button onclick="sendMessage()">Send</button>
+</div>
+
+<div id="response"></div>
+
+</div>
+
+<script>
+
+async function sendMessage() {
+
+    const message = document.getElementById("msg").value;
+    const output = document.getElementById("response");
+
+    output.innerHTML = "";
+    const cursor = document.createElement("span");
+    cursor.className = "cursor";
+    output.appendChild(cursor);
+
+    const response = await fetch("/api/chat-stream", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ text: message })
+    });
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+
+    while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value);
+
+        cursor.remove();
+        output.innerHTML += chunk;
+        output.appendChild(cursor);
+
+        output.scrollTop = output.scrollHeight;
+    }
+
+    cursor.remove();
+}
+
+</script>
+
+</body>
+</html>
